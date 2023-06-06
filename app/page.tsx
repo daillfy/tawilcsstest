@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -27,7 +28,7 @@ const HeadAction = () => (
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="lucide lucide-plus"
+        className="lucide lucide-plus"
       >
         <line x1="12" x2="12" y1="5" y2="19"></line>
         <line x1="5" x2="19" y1="12" y2="12"></line>
@@ -42,18 +43,10 @@ export default function Home() {
     <>
       <Header action={<HeadAction />} />
       <Container className="mt-0">
-        <div className="flex flex-col w-full justify-start gap-4 border rounded-lg shadow	border-slate-300 p-6">
-          <Typography variant="h4">this is Typography demo</Typography>
-          <div>test text color</div>
-          <Typography style="normal-nums tracking-wide line-clamp-1 ">
-            body2. Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-            Quos fugiat deleniti? Eum quasi quidem quibusdam.body2. Lorem ipsum
-            dolor sit amet, consectetuum quas
-          </Typography>
-        </div>
+        <Link href="/test/form">to customePage</Link>
         {/* 断点设计 */}
         <div className="w-full inline-grid md:grid-cols-3 sm:grid-cols-3 xs:grid-cols-1 gap-4 mt-6 ">
-          <div className="w-64 h-64 pt-4  border rounded-lg relative cursor-pointer">
+          <div className=" h-64 pt-4  border rounded-lg relative cursor-pointer">
             <div>
               <Image
                 src="https://backend.withcontext.ai/backend/upload/2023/04/7ae3135d-588e-4b46-b97b-afcd53170013.jpeg"
@@ -73,7 +66,7 @@ export default function Home() {
               </Typography>
             </div>
           </div>
-          <Card className="w-[256px] h-[256px] cursor-pointer">
+          <Card className=" h-[256px] cursor-pointer">
             <div className="pt-4 px-0 relative pb-2">
               <Image
                 src="https://backend.withcontext.ai/backend/upload/2023/04/7ae3135d-588e-4b46-b97b-afcd53170013.jpeg"
@@ -93,7 +86,7 @@ export default function Home() {
               </CardDescription>
             </CardContent>
           </Card>
-          <Card className="w-[256px] h-[256px] cursor-pointer">
+          <Card className=" h-[256px] cursor-pointer">
             <div className="pt-4 px-0 relative pb-2">
               <Image
                 src="https://backend.withcontext.ai/backend/upload/2023/04/7ae3135d-588e-4b46-b97b-afcd53170013.jpeg"
@@ -113,7 +106,7 @@ export default function Home() {
               </CardDescription>
             </CardContent>
           </Card>
-          <Card className="w-[256px] h-[256px] cursor-pointer">
+          <Card className=" h-[256px] cursor-pointer">
             <div className="pt-4 px-0 relative pb-2">
               <Image
                 src="https://backend.withcontext.ai/backend/upload/2023/04/7ae3135d-588e-4b46-b97b-afcd53170013.jpeg"
