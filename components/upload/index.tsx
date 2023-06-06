@@ -320,7 +320,9 @@ const Upload = (props: UploadProps) => {
                 <div className="flex justify-between items-center w-full">
                   <div className={`flex gap-2 items-center `}>
                     <PdfImage />
-                    <div className="line-clamp-1">{file?.name}</div>
+                    <div className={`line-clamp-1 ${props?.fileNameStyle}`}>
+                      {file?.name}
+                    </div>
                   </div>
                   {showIcon?.show && (
                     <div className="flex gap-1">
