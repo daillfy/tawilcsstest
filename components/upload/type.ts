@@ -1,10 +1,13 @@
+import { ReactNode } from 'react'
 import type {
   RcFile as OriRcFile,
   UploadRequestOption as RcCustomRequestOptions,
   UploadProps as RcUploadProps,
 } from 'rc-upload/lib/interface'
 
-// @mui
+export interface HttpRequestHeader {
+  [key: string]: string
+}
 
 // ----------------------------------------------------------------------
 export type UploadFileStatus =
@@ -68,6 +71,8 @@ export interface UploadProps<T = any> extends Pick<RcUploadProps, 'capture'> {
   name?: string
   defaultFileList?: Array<UploadFile<T>>
   fileList?: Array<UploadFile<T>>
+  type?: 'drag' | 'select'
+  listType?: 'images-list' | 'pdf' | 'image'
   action?:
     | string
     | ((file: RcFile) => string)
@@ -79,7 +84,7 @@ export interface UploadProps<T = any> extends Pick<RcUploadProps, 'capture'> {
         file: UploadFile<T>
       ) => Record<string, unknown> | Promise<Record<string, unknown>>)
   method?: 'POST' | 'PUT' | 'PATCH' | 'post' | 'put' | 'patch'
-  // headers?: HttpRequestHeader;
+  headers?: HttpRequestHeader
   showUploadList?: boolean | ShowUploadListInterface
   multiple?: boolean
   accept?: string
@@ -102,6 +107,7 @@ export interface UploadProps<T = any> extends Pick<RcUploadProps, 'capture'> {
   progress?: any
   maxCount?: number
   children?: React.ReactNode
+  disabled?: boolean
 }
 
 export interface ShowUploadListInterface<T = any> {
@@ -114,29 +120,31 @@ export interface ShowUploadListInterface<T = any> {
 }
 
 export interface UploadLocale {
-  uploading?: string
-  removeFile?: string
-  downloadFile?: string
-  uploadError?: string
-  previewFile?: string
+  uploading?: string | ReactNode
+  removeFile?: string | ReactNode
+  downloadFile?: string | ReactNode
+  uploadError?: string | ReactNode
+  previewFile?: string | ReactNode
 }
 
 export interface UploadState<T = any> {
   fileList: UploadFile<T>[]
   dragState: string
 }
-export interface UploadListProps<T = any> {
+export interface FileItemProps<T = any> {
   onPreview?: (file: UploadFile<T>) => void
   onDownload?: (file: UploadFile<T>) => void
   onRemove?: (file: UploadFile<T>) => void | boolean
-  items?: Array<UploadFile<T>>
+  file: UploadFile
   progress?: any
   className?: string
-  showRemoveIcon?: boolean
-  showDownloadIcon?: boolean
-  showPreviewIcon?: boolean
-  removeIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
-  downloadIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
-  previewIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
-  locale: UploadLocale
+  showUploadList?: boolean | ShowUploadListInterface
+  fileNameStyle?: string
+  // showRemoveIcon?: boolean
+  // showDownloadIcon?: boolean
+  // showPreviewIcon?: boolean
+  // removeIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
+  // downloadIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
+  // previewIcon?: React.ReactNode | ((file: UploadFile) => React.ReactNode)
+  locale?: UploadLocale
 }

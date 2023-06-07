@@ -59,3 +59,16 @@ export const checkShowIcon = (
     return { show: showUploadList }
   }
 }
+
+export const checkType = (file: UploadFile) => {
+  if (file?.type === 'appliction/pdf' || file?.url?.includes('.pdf')) {
+    return 'isPDF'
+  }
+  return 'isImage'
+}
+
+export const getBase64 = (img: RcFile, callback: (url: string) => void) => {
+  const reader = new FileReader()
+  reader.addEventListener('load', () => callback(reader.result as string))
+  reader.readAsDataURL(img)
+}

@@ -1,5 +1,7 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
+import Image from 'next/image'
 import { VariantProps } from 'class-variance-authority'
+import { BoxIcon, Download, Eye, X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import {
@@ -9,13 +11,18 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
+import { Progress } from '../ui/progress'
+import { Skeleton } from '../ui/skeleton'
 import { Toggle } from '../ui/toggle'
-import { UploadFile } from './type'
+import { FileItemProps, UploadFile } from './type'
+import { checkShowIcon } from './utils'
 
 interface IconBoxProps {
   children: ReactNode
   className?: string
   onClick?: () => void
+  tragClassName?: string
 }
 
 interface PreviewProps {
@@ -33,7 +40,9 @@ export const IconBox = (props: IconBoxProps) => (
     )}`}
     onClick={props?.onClick}
   >
-    <Toggle size="sm">{props?.children}</Toggle>
+    <Toggle className={props?.tragClassName} size="sm">
+      {props?.children}
+    </Toggle>
   </div>
 )
 
@@ -81,3 +90,169 @@ export const PdfImage = () => (
     </defs>
   </svg>
 )
+
+export const PDFFile = (props: FileItemProps) => {
+  const {
+    file,
+    showUploadList,
+    fileNameStyle,
+    onDownload,
+    onPreview,
+    onRemove,
+  } = props
+  const showIcon = checkShowIcon(showUploadList || false)
+  const [open, setOpen] = useState<boolean>(false)
+  const preview = (file: UploadFile) => {
+    if (props?.onPreview) {
+      props?.onPreview(file)
+    } else {
+      setOpen(true)
+    }
+  }
+  return (
+    <div
+      className={`relative ${file?.status === 'uploading' ? 'bg-gray-50	' : ''}`}
+      key={file?.uid}
+    >
+      <div
+        className={`flex border py-4 pl-6 pr-4 w-full rounded-md relative z-10 h-full ${
+          file?.status === 'error' ? 'border-[#ff4d4f]' : ''
+        }`}
+      >
+        <div className="flex justify-between items-center w-full">
+          <div className={`flex gap-2 items-center flex-b w-[90%] `}>
+            <PdfImage />
+            <div className="flex flex-col gap-1 w-full">
+              <div className={`line-clamp-1 ${fileNameStyle}`}>
+                {file?.name}
+              </div>
+              {file?.status === 'uploading' && (
+                <Progress value={file?.percent} className="h-1" />
+              )}
+            </div>
+          </div>
+          {showIcon?.show && (
+            <div className="flex gap-1">
+              {(file?.status === 'success' || file?.status === 'done') && (
+                <>
+                  <IconBox onClick={() => onDownload!(file)}>
+                    {/* @ts-ignore */}
+                    {showIcon?.downloadIcon || (
+                      <Download size={16} strokeWidth={3} />
+                    )}
+                  </IconBox>
+                  <IconBox onClick={() => preview(file)}>
+                    {/* @ts-ignore */}
+                    {showIcon?.previewIcon || <Eye size={16} strokeWidth={3} />}
+                  </IconBox>
+                </>
+              )}
+              <IconBox onClick={() => onRemove!(file)}>
+                {/* @ts-ignore */}
+                {showIcon?.removeIcon || <X size={16} strokeWidth={3} />}
+              </IconBox>
+            </div>
+          )}
+        </div>
+      </div>
+      {file?.status === 'error' && (
+        <div className="text-[rgb(255,77,79)] line-clamp-1">
+          {file?.error?.message || props?.locale?.uploadError}
+        </div>
+      )}
+      <PreviewPdf file={file} open={open} setOpen={setOpen} />
+    </div>
+  )
+}
+
+export const ImageFile = (props: FileItemProps) => {
+  const { className, file, showUploadList, onRemove } = props
+  const showIcon = checkShowIcon(showUploadList || false)
+  const [open, setOpen] = useState<boolean>(false)
+  const previw = () => {
+    console.log('--preview')
+    if (props?.onPreview) {
+      props?.onPreview(file)
+    } else {
+      setOpen(true)
+    }
+  }
+  const showBoth = showIcon?.showRemoveIcon && showIcon?.removeIcon
+  return (
+    <>
+      <div
+        className={`${className} p-2 border w-[80px] rounded-lg relative h-[80px] ${
+          file?.status === 'error' ? 'border-[#ff4d4f]' : ''
+        } ${file?.status === 'uploading' ? 'bg-gray-50' : ''}`}
+        key={file?.uid}
+      >
+        <div className={`w-full h-full relative z-10 flex items-center`}>
+          {file?.status == 'uploading' ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+              {props?.locale?.uploading || 'uploading'}
+              <Progress value={file?.percent} className="h-1" />
+            </div>
+          ) : (
+            <Image
+              src={file?.url || ''}
+              width={72}
+              height={72}
+              alt={file?.name}
+            />
+          )}
+        </div>
+        {showUploadList !== false && (
+          <Toggle
+            onClick={() => onRemove!(file)}
+            className={`border rounded-full w-6 h-6 z-20  p-1 ${
+              file?.status === 'uploading' ? 'bg-white' : 'bg-sky-50'
+            } absolute top-1 right-1`}
+          >
+            {/* @ts-ignore */}
+            {showIcon?.removeIcon || <X size={18} strokeWidth={3} />}
+          </Toggle>
+        )}
+
+        {showBoth && file?.status !== 'uploading' && (
+          <div
+            className={
+              'flex items-center w-full h-full absolute z-20 gap-1 top-0'
+            }
+          >
+            <Toggle
+              onClick={() => onRemove!(file)}
+              className={`border rounded-full z-20 p-1 bg-sky-50 w-5 h-5`}
+            >
+              {/* @ts-ignore */}
+              {showIcon?.removeIcon || <X size={18} strokeWidth={3} />}
+            </Toggle>
+
+            <Toggle
+              onClick={() => previw()}
+              className="w-5 h-5 p-1 bg-sky-50 border rounded-full"
+            >
+              {/* @ts-ignore */}
+              {showIcon?.previewIcon || <Eye size={18} strokeWidth={3} />}
+            </Toggle>
+          </div>
+        )}
+      </div>
+      {file?.status === 'error' && (
+        <div className="text-[rgb(255,77,79)] line-clamp-1">
+          {file?.error?.message || props?.locale?.uploadError}
+        </div>
+      )}
+      <Dialog open={open} onOpenChange={() => setOpen(false)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <Image
+            src={file?.url}
+            full
+            sizes="(max-width: 500px)"
+            width={500}
+            height={500}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}

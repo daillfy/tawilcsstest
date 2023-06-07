@@ -1,12 +1,12 @@
-import React, { ReactNode, useState } from 'react'
-import { Download, Eye, Upload as UploadIcon, X } from 'lucide-react'
+import React, { ReactNode, useCallback, useState } from 'react'
+import { Upload as UploadIcon, X } from 'lucide-react'
 import RcUpload from 'rc-upload'
 import type { UploadProps as RcUploadProps } from 'rc-upload'
 import useMergedState from 'rc-util/lib/hooks/useMergedState'
 import { flushSync } from 'react-dom'
 
-import { Progress } from '../ui/progress'
-import { IconBox, PdfImage, PreviewPdf } from './component'
+import { Toggle } from '../ui/toggle'
+import { ImageFile, PDFFile, PdfImage, PreviewPdf } from './component'
 import {
   RcFile,
   UploadChangeParam,
@@ -15,7 +15,7 @@ import {
   UploadProps,
 } from './type'
 import {
-  checkShowIcon,
+  checkType,
   file2Obj,
   getFileItem,
   removeFileItem,
@@ -31,10 +31,13 @@ const Upload = (props: UploadProps) => {
     onRemove,
     onDrop,
     accept,
-    action,
+    action = '',
     multiple = true,
+    type = 'select',
+    listType = 'pdf',
     showUploadList = true,
     data,
+    disabled: mergedDisabled,
   } = props
   const [mergedFileList, setMergedFileList] = useMergedState(
     defaultFileList || [],
@@ -43,8 +46,6 @@ const Upload = (props: UploadProps) => {
       postState: (list) => list ?? [],
     }
   )
-
-  const [open, setOpen] = useState<boolean>(false)
 
   const [dragState, setDragState] = React.useState<string>('drop')
   const upload = React.useRef<RcUpload>(null)
@@ -163,6 +164,7 @@ const Upload = (props: UploadProps) => {
 
     onInternalChange(targetItem, nextFileList)
   }
+
   const onError = (error: Error, response: any, file: RcFile) => {
     // removed
     if (!getFileItem(file, mergedFileList)) {
@@ -178,6 +180,7 @@ const Upload = (props: UploadProps) => {
 
     onInternalChange(targetItem, nextFileList)
   }
+
   const onProgress = (e: { percent: number }, file: RcFile) => {
     // removed
     if (!getFileItem(file, mergedFileList)) {
@@ -217,7 +220,6 @@ const Upload = (props: UploadProps) => {
           }
         })
         // upload.current?.abort(currentFile as RcFile);
-        console.log('---remove---step2')
         onInternalChange(currentFile, removedFileList)
       }
     })
@@ -230,19 +232,6 @@ const Upload = (props: UploadProps) => {
       onDrop?.(e)
     }
   }
-
-  const rcUploadProps = {
-    onBatchStart,
-    onError,
-    onProgress,
-    onSuccess,
-    ...props,
-    data,
-    multiple,
-    action,
-    accept,
-    onChange: undefined,
-  } as RcUploadProps
 
   const donwload = (file: UploadFile) => {
     if (props?.onDownload) {
@@ -265,15 +254,88 @@ const Upload = (props: UploadProps) => {
     }
   }
 
-  const preview = (file: UploadFile) => {
-    if (props?.onPreview) {
-      props?.onPreview(file)
-    } else {
-      setOpen(true)
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const rcUploadProps = {
+    onBatchStart,
+    onError,
+    onProgress,
+    onSuccess,
+    ...props,
+    data,
+    multiple,
+    action,
+    accept,
+    disabled: mergedDisabled,
+    onChange: undefined,
+  } as RcUploadProps
+
+  delete rcUploadProps.className
+  delete rcUploadProps.style
+
+  // Remove id to avoid open by label when trigger is hidden
+  // !children: https://github.com/ant-design/ant-design/issues/14298
+  // disabled: https://github.com/ant-design/ant-design/issues/16478
+  //           https://github.com/ant-design/ant-design/issues/24197
+  if (!props?.children || mergedDisabled) {
+    delete rcUploadProps.id
   }
 
-  const showIcon = checkShowIcon(showUploadList || false)
+  const selectDefaultButton = useCallback(() => {
+    if (listType === 'pdf') {
+      return (
+        <Toggle className="bg-[#0F172A] text-white px-4 py-2 rounded-md flex flex-row text-sm cursor-pointer">
+          <UploadIcon size={16} strokeWidth={3} />
+          <span className="pl-2">Upload File</span>
+        </Toggle>
+      )
+    } else {
+      return (
+        <Toggle className="w-16 h-16 bg-slate-50 rounded-lg border-dashed border-slate-300 flex justify-center items-center border">
+          <UploadIcon size={28} strokeWidth={2} />
+        </Toggle>
+      )
+    }
+  }, [listType])
+  const defaultButton = useCallback(() => {
+    // 上传按钮的默认样式
+    if (type === 'drag') {
+      return (
+        <div>
+          Upload Files
+          <div>
+            Drag and drop your PDF here or <span>Browse.</span>
+          </div>
+        </div>
+      )
+    }
+    return selectDefaultButton()
+  }, [selectDefaultButton, type])
+
+  const showUploadIcon = useCallback(() => {
+    const notShow = listType === 'image' && mergedFileList?.length !== 0
+    const file = mergedFileList?.[0]
+    return notShow ? (
+      <ImageFile
+        file={file}
+        // @ts-nocheck
+        onRemove={handleRemove}
+        className="w-16 h-16"
+        {...props}
+      />
+    ) : (
+      <RcUpload {...rcUploadProps} ref={upload}>
+        {props?.children || defaultButton()}
+      </RcUpload>
+    )
+  }, [
+    listType,
+    mergedFileList,
+    handleRemove,
+    rcUploadProps,
+    props?.children,
+    defaultButton,
+  ])
+
   return (
     <div className="upload-wraper p-8">
       <div
@@ -281,87 +343,30 @@ const Upload = (props: UploadProps) => {
           onDrop
             ? 'bg-[#f4f6f8] borer-[#919eab] opcity-[0.32] p-10 rounded-md transition ease-in-out delay-150 hover:p-12 hover:bg-slate-50'
             : ''
-        }`}
+        } flex flex-col gap-4`}
         onClick={onFileDrop}
       >
-        <RcUpload {...rcUploadProps} ref={upload}>
-          {props?.children ||
-            (onDrop ? (
-              <div>
-                Upload Files
-                <div>
-                  Drag and drop your PDF here or <span>Browse.</span>
-                </div>
-              </div>
+        {showUploadIcon()}
+        {listType !== 'image' &&
+          mergedFileList?.map((file) => {
+            const type = checkType(file)
+            return type === 'isPDF' ? (
+              <PDFFile
+                file={file}
+                onDownload={donwload}
+                onRemove={handleRemove}
+                {...props}
+                key={file?.uid || file?.url}
+              />
             ) : (
-              <button className="bg-[#0F172A] text-white px-4 py-2 rounded-md flex flex-row text-sm mb-4 cursor-pointer">
-                <UploadIcon size={16} color="#fff" strokeWidth={3} />
-                <span className="pl-2">Upload File</span>
-              </button>
-            ))}
-        </RcUpload>
-        {mergedFileList?.map((file) => {
-          return (
-            <div className="relative" key={file?.uid}>
-              <div
-                className={`flex border ${
-                  file?.status === 'uploading' ? 'p-0' : 'py-4 pl-6 pr-4'
-                } w-full rounded-md relative z-10 ${
-                  file?.status === 'error' ? 'border-[#ff4d4f]' : ''
-                }`}
-              >
-                {file?.status === 'uploading' && (
-                  <div className="absolute z-100 bg-slate-50 w-full h-full flex items-center top-0 flex-col">
-                    {props?.locale?.uploading}
-                    <Progress value={file?.percent} className="h-2" />
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center w-full">
-                  <div className={`flex gap-2 items-center `}>
-                    <PdfImage />
-                    <div className={`line-clamp-1 ${props?.fileNameStyle}`}>
-                      {file?.name}
-                    </div>
-                  </div>
-                  {showIcon?.show && (
-                    <div className="flex gap-1">
-                      {(file?.status === 'success' ||
-                        file?.status === 'done') && (
-                        <>
-                          <IconBox onClick={() => donwload(file)}>
-                            {/* @ts-ignore */}
-                            {showIcon?.downloadIcon || (
-                              <Download size={16} strokeWidth={3} />
-                            )}
-                          </IconBox>
-                          <IconBox onClick={() => preview(file)}>
-                            {/* @ts-ignore */}
-                            {showIcon?.previewIcon || (
-                              <Eye size={16} strokeWidth={3} />
-                            )}
-                          </IconBox>
-                        </>
-                      )}
-                      <IconBox onClick={() => handleRemove(file)}>
-                        {/* @ts-ignore */}
-                        {showIcon?.removeIcon || (
-                          <X size={16} strokeWidth={3} />
-                        )}
-                      </IconBox>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {file?.status === 'error' && (
-                <div className="text-[#ff4d4f] line-clamp-1">
-                  {file?.error?.message || props?.locale?.uploadError}
-                </div>
-              )}
-              <PreviewPdf file={file} open={open} setOpen={setOpen} />
-            </div>
-          )
-        })}
+              <ImageFile
+                file={file}
+                {...props}
+                key={file?.uid || file?.url}
+                onRemove={handleRemove}
+              />
+            )
+          })}
       </div>
     </div>
   )
